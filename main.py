@@ -65,7 +65,7 @@ if page == "Inversion":
             progress = st.progress(0)  
 
             # Stage 1: Calculate Apparent Resistivity if necessary
-            progress.progress(10)
+            progress.progress(5)
             if "Apparent Resistivity" not in data.columns:
                 st.sidebar.write("Apparent Resistivity is not in the data.")
                 method = st.sidebar.selectbox(
@@ -85,11 +85,11 @@ if page == "Inversion":
                     )
 
             # Stage 2: Group Data
-            progress.progress(30)
+            progress.progress(20)
             data_grouped = data.groupby("AB").mean().reset_index()
 
             # Stage 3: Initial guesses for resistivity and thickness
-            progress.progress(50)
+            progress.progress(30)
             col1, col2 = st.columns([3, 2])
 
             with col1:
@@ -102,7 +102,7 @@ if page == "Inversion":
                 )
 
                 # Stage 4: Optimization Process
-                progress.progress(70)
+                progress.progress(50)
                 if optimization_method == "Levenberg":
                     result, error = optimize_inversion_levenberg(
                         data_grouped, initial_guess, num_layers
