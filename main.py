@@ -15,9 +15,7 @@ from func.utils import (
 )
 
 # Set page configuration
-st.set_page_config(
-    page_title="Geoelectric Inversion", layout="wide"
-)
+st.set_page_config(page_title="Geoelectric Inversion", layout="wide")
 
 # Sidebar for page navigation
 page = st.sidebar.selectbox("Select a page:", ["Inversion", "Dummy Data Generator"])
@@ -36,7 +34,6 @@ if page == "Inversion":
     if uploaded_file is not None:
         col1, col2 = st.columns([2, 3])
         with col1:
-
             data = pd.read_csv(uploaded_file)
             st.write("### Uploaded Data")
             st.dataframe(data.head())
@@ -64,8 +61,11 @@ if page == "Inversion":
             # Add a start button to control when the inversion happens
             start_inversion = st.button("Start Inversion")
 
-        if start_inversion:  # Only run if Start Inversion is pressed
-            # Menentukan apakah Apparent Resistivity sudah ada atau perlu dihitung
+        if start_inversion: 
+            progress = st.progress(0)  
+
+            # Stage 1: Calculate Apparent Resistivity if necessary
+            progress.progress(10)
             if "Apparent Resistivity" not in data.columns:
                 st.sidebar.write("Apparent Resistivity is not in the data.")
                 method = st.sidebar.selectbox(
@@ -84,14 +84,15 @@ if page == "Inversion":
                         )
                     )
 
-            # Gabungkan data dengan AB yang sama
+            # Stage 2: Group Data
+            progress.progress(30)
             data_grouped = data.groupby("AB").mean().reset_index()
 
-            # Sidebar for model parameters
+            # Stage 3: Initial guesses for resistivity and thickness
+            progress.progress(50)
             col1, col2 = st.columns([3, 2])
 
             with col1:
-                # Tebakan awal resistivitas dan ketebalan
                 initial_resistivities = np.ones(num_layers) * np.mean(
                     data_grouped["Apparent Resistivity"]
                 )
@@ -100,7 +101,8 @@ if page == "Inversion":
                     [initial_resistivities, initial_thicknesses]
                 )
 
-                # Optimisasi inversi
+                # Stage 4: Optimization Process
+                progress.progress(70)
                 if optimization_method == "Levenberg":
                     result, error = optimize_inversion_levenberg(
                         data_grouped, initial_guess, num_layers
@@ -113,12 +115,13 @@ if page == "Inversion":
                         optimization_method,
                     )
 
-                # Hitung resistivitas hasil inversi
+                # Stage 5: Calculate forward model for the inversion result
+                progress.progress(85)
                 calculated_resistivity = forward_model(
                     data_grouped["AB"], result, num_layers
                 )
 
-                # Plot hasil resistivitas semu dan inversi
+                # Stage 6: Plotting inversion results
                 fig = plot_inversion_results(
                     data_grouped,
                     data_grouped["AB"],
@@ -129,23 +132,27 @@ if page == "Inversion":
                 st.write("### Inversion Results")
                 st.pyplot(fig)
 
-                # Plot penampang geologi di bawah plot inversi
+                # Stage 7: Plotting geology cross-section
                 st.write("### Geology Cross Section")
                 thicknesses = result[num_layers:]  # Ambil ketebalan
                 thicknesses = thicknesses[~np.isnan(thicknesses)]  # Hapus nilai NaN
                 fig2 = plot_geology_cross_section(result[:num_layers], thicknesses)
                 st.pyplot(fig2)
 
-            with col2:
-                # Buat DataFrame hasil inversi
-                inversion_df = create_inversion_dataframe(result, num_layers)
+                # Finalize progress
+                progress.progress(100)
 
-                # Tampilkan DataFrame hasil inversi
-                st.write("#### Inversion Table")
-                st.dataframe(inversion_df)
+                with col2:
+                    # Buat DataFrame hasil inversi
+                    inversion_df = create_inversion_dataframe(result, num_layers)
 
-                # Tampilkan error inversi
-                st.error(f"### Inversion Error: {error/100:.2f}%")
+                    # Tampilkan DataFrame hasil inversi
+                    st.write("#### Inversion Table")
+                    st.dataframe(inversion_df)
+
+                    # Tampilkan error inversi
+                    st.error(f"### Inversion Error: {error/100:.2f}%")
+
     else:
         st.write("Please upload a CSV file to proceed.")
 
