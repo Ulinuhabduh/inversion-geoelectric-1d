@@ -74,9 +74,6 @@ def forward_model(ab, params, num_layers):
     return apparent_resistivities
 
 
-
-
-
 # Fungsi untuk menampilkan hasil inversi dalam bentuk DataFrame
 def create_inversion_dataframe(result, num_layers):
     resistivities = result[:num_layers]

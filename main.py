@@ -150,6 +150,14 @@ if page == "Inversion":
                     st.write("#### Inversion Table")
                     st.dataframe(inversion_df)
 
+                    csv = inversion_df.to_csv(index=False).encode("utf-8")
+                    st.download_button(
+                        label="Download Data Inversi",
+                        data=csv,
+                        file_name="data hasil inversi.csv",
+                        mime="text/csv",
+                    )
+
                     # Tampilkan error inversi
                     st.error(f"### Inversion Error: {error/100:.2f}%")
 
